@@ -111,7 +111,7 @@ class BaseModel(nn.Module):
             tot += w
         if return_str:
             if tot >= 1e6:
-                return "{:.1f}M".format(tot / 1e6)
+                return "{:.1f}M".format(tot / 1e6) 
             else:
                 return "{:.1f}K".format(tot / 1e3)
         else:
@@ -127,7 +127,7 @@ class BaseEncoder(nn.Module):
         super().__init__()
 
     def forward_features(self, samples, **kwargs):
-        raise NotImplementedError
+        raise NotImplementedError  
 
     @property
     def device(self):

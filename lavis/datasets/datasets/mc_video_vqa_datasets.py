@@ -75,7 +75,7 @@ class MCVideoQADataset(MultimodalClassificationDataset, __DisplMixin):
                     relevant_windows = ann['relevant_windows']
                 else:
                     relevant_windows = None # for test
-                pseudo_options = 'Option A: yes. Option B: no.'
+                pseudo_options = 'Option A: yes. Option B: no.'# change into 3 options: inside, left, right
                 if q[-1] != '.':
                     q += '.'      
                 loc_prompt = 'Question: ' + q +  ' ' + pseudo_options + ' Does the information within the frame provide the necessary details to accurately answer the given question?'
@@ -118,24 +118,55 @@ class MCVideoQADataset(MultimodalClassificationDataset, __DisplMixin):
                 frms = frms.permute(1, 0, 2, 3)
                 assert len(frms) == self.vis_processor.n_frms
                 
-                if 'QVHighlight' in qid: 
+                if 'QVHighlight' in qid: #change it 
                     time_stamp = [float(idx/fps) for idx in indices]
-                    answers = []
+                    # answers = []
+                    """ 
                     if relevant_windows is not None:
                         for t in time_stamp:
                             flag = False
                             for span in relevant_windows:
                                 if t >= float(span[0]) and t<= float(span[1]):
-                                    answers.append('yes')
+                                    answers.append('YOU ARE INSIDE THE RELEVANT WINDOW')
                                     flag = True 
                                     break
                             if not flag:
                                 answers.append('no') 
                     else:
                         for t in time_stamp:
-                            answers.append('no') # for test
+                            answers.append('no') 
+                    """ # for test
+                    # Initialize an empty dictionary to store the answers for each relevant window
+                    window_answers = {}
+
+                    if relevant_windows is not None:
+                        for t in time_stamp:
+                            # Assume the timestamp is outside all windows initially
+                            answer_for_t = 'YOU ARE AFTER THE RELEVANT WINDOW'
                             
-                    answers = '_'.join(answers)
+                            for span in relevant_windows:
+                                if t < float(span[0]):
+                                    # If the timestamp is before the current window, update the message
+                                    # and break, as we don't need to check further windows
+                                    answer_for_t = 'YOU ARE BEFORE THE RELEVANT WINDOW'
+                                    break
+                                elif t <= float(span[1]):
+                                    # If the timestamp is within the current window, update the message
+                                    # No need to check further as we found the relevant window
+                                    answer_for_t = 'YOU ARE INSIDE THE RELEVANT WINDOW'
+                                    break
+                                # If the timestamp is after the current window, continue checking the next window
+                                # The initial assumption handles this case
+                            
+                            # Update the dictionary with the timestamp and its corresponding message
+                            window_answers[t] = answer_for_t
+                    else:
+                        # If there are no relevant windows, all timestamps are considered outside
+                        for t in time_stamp:
+                            window_answers[t] = 'NO RELEVANT WINDOW'  # or any default message you prefer
+
+                    # Now, window_answers dictionary contains the answer for each timestamp        
+                    # answers = '_'.join(answers)
                               
                 result = True
             except Exception as e:
